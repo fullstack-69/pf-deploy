@@ -39,7 +39,6 @@ services:
             "-c",
             'pnpm run db:migrate | awk ''{ print strftime("[%Y-%m-%d %H:%M:%S]"), $0; fflush(); }'' | tee -a /app/logs/migration.log',
           ]
-    user: "${UID}:${GID}"
   frontend:
     depends_on:
       - backend
