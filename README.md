@@ -17,25 +17,3 @@ There was a startup race between the backend migration step and the Postgres ini
 `depends_on` only waits for the database container to start, not for Postgres to finish accepting connections or for the init script to complete. On slower machines, the backend could try to run `pnpm run db:migrate` before the database user and credentials created by the init script were ready, which caused the migration step to fail even though the container later worked fine when run manually.
 
 The compose update addresses this by adding a Postgres healthcheck and making the backend wait for `service_healthy` before starting its migration hook. That changes the dependency from "container started" to "database is actually ready".
-
-Changed snippet:
-
-```yaml
-  db:
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_APP_USER} -d ${POSTGRES_APP_PASSWORD}"]
-      interval: 5s
-      timeout: 5s
-      retries: 20
-  backend:
-    depends_on:
-      db:
-        condition: service_healthy
-    post_start:
-      - command:
-          [
-            "sh",
-            "-c",
-            'pnpm run db:migrate | awk ''{ print strftime("[%Y-%m-%d %H:%M:%S]"), $0; fflush(); }'' | tee -a /app/logs/migration.log',
-          ]
-```
