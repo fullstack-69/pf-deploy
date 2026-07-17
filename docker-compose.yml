@@ -16,9 +16,15 @@ services:
       - POSTGRES_APP_PASSWORD=${POSTGRES_APP_PASSWORD}
     networks:
       - pf-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_APP_USER} -d ${POSTGRES_APP_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
   backend:
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     image: ${BACKEND_IMAGE_NAME}
     container_name: ${PROJECT_NAME}-backend
     restart: always
